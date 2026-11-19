@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#090b10" />
+    <title>Streamer Shorts Studio</title>
+    <link rel="stylesheet" href="/assets/studio.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Streamer Shorts Studio home"><span class="brand-mark">S</span><span>SHORTS<span class="brand-light"> / STUDIO</span></span></a>
+      <span class="local-badge"><i></i> LOCAL RENDER</span>
+    </header>
+
+    <main class="shell">
+      <section class="intro">
+        <p class="eyebrow">YOUR CLIP. YOUR CUT.</p>
+        <h1>Turn two angles<br />into <em>one moment.</em></h1>
+        <p class="lede">Stack your facecam over gameplay, dial in the crop, style the captions, and render a ready-to-post vertical short.</p>
+      </section>
+
+      <form id="studio-form">
+        <section class="workspace">
+          <div class="panel preview-panel">
+            <div class="panel-heading"><div><span class="step">01</span><h2>Build your frame</h2></div><span class="panel-note">LIVE LAYOUT PREVIEW</span></div>
+            <div class="preview-stage"><canvas id="composite" width="540" height="960" aria-label="Vertical facecam and gameplay preview"></canvas><div id="empty-preview" class="preview-empty"><span class="play-glyph">▶</span><span>Upload both angles to preview</span></div></div>
+            <div class="source-previews">
+              <label class="upload-tile" for="facecam"><span class="upload-icon">↥</span><span class="upload-copy"><strong>Streamer video</strong><small id="facecam-name">MP4, MOV, MKV or WebM</small></span><span class="plus">+</span></label>
+              <input id="facecam" name="facecam" type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,.m4v" required />
+              <label class="upload-tile" for="gameplay"><span class="upload-icon">↥</span><span class="upload-copy"><strong>GTA gameplay</strong><small id="gameplay-name">MP4, MOV, MKV or WebM</small></span><span class="plus">+</span></label>
+              <input id="gameplay" name="gameplay" type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,.m4v" required />
+            </div>
+            <video id="facecam-player" muted playsinline loop></video><video id="gameplay-player" muted playsinline loop></video>
+          </div>
+
+          <div class="panel settings-panel">
+            <div class="panel-heading"><div><span class="step">02</span><h2>Shape the short</h2></div></div>
+            <div class="setting-block">
+              <div class="label-line"><label for="facecam_height">Facecam share</label><output id="split-value">40% top</output></div>
+              <input id="facecam_height" name="facecam_height" type="range" min="576" max="960" step="96" value="768" />
+              <div class="range-labels"><span>30% · facecam</span><span>50% · facecam</span></div>
+            </div>
+            <div class="focus-grid">
+              <div class="setting-block"><div class="label-line"><label for="facecam_focus_y">Facecam focus</label><output id="face-focus-value">50 / 50</output></div><div class="focus-controls"><label class="sr-only" for="facecam_focus_x">Facecam horizontal focus</label><input id="facecam_focus_x" name="facecam_focus_x" type="range" min="0" max="100" value="50" aria-label="Facecam horizontal crop focus" /><label class="sr-only" for="facecam_focus_y">Facecam vertical focus</label><input id="facecam_focus_y" name="facecam_focus_y" type="range" min="0" max="100" value="50" aria-label="Facecam vertical crop focus" /></div><small>Horizontal · vertical</small></div>
+              <div class="setting-block"><div class="label-line"><label for="gameplay_focus_y">Gameplay focus</label><output id="game-focus-value">50 / 50</output></div><div class="focus-controls"><label class="sr-only" for="gameplay_focus_x">Gameplay horizontal focus</label><input id="gameplay_focus_x" name="gameplay_focus_x" type="range" min="0" max="100" value="50" aria-label="Gameplay horizontal crop focus" /><label class="sr-only" for="gameplay_focus_y">Gameplay vertical crop focus</label><input id="gameplay_focus_y" name="gameplay_focus_y" type="range" min="0" max="100" value="50" aria-label="Gameplay vertical crop focus" /></div><small>Horizontal · vertical</small></div>
+            </div>
+            <div class="setting-block"><div class="label-line"><label for="caption_style">Caption look</label></div><select id="caption_style" name="caption_style"><option value="bold">Impact · white + gold highlight</option><option value="clean">Clean · compact outline</option><option value="neon">Neon · bright highlight</option></select></div>
+            <div class="setting-block"><div class="label-line"><label for="fps">Frame rate</label></div><div class="choice-row"><label><input type="radio" name="fps" value="30" checked /><span>30 FPS</span></label><label><input type="radio" name="fps" value="60" /><span>60 FPS</span></label></div></div>
+            <div class="audio-grid">
+              <div class="setting-block"><div class="label-line"><label for="streamer_volume">Streamer audio</label><output id="streamer-volume-value">100%</output></div><input id="streamer_volume" name="streamer_volume" type="range" min="0" max="200" value="100" /></div>
+              <div class="setting-block"><div class="label-line"><label for="gameplay_volume">Gameplay audio</label><output id="gameplay-volume-value">100%</output></div><input id="gameplay_volume" name="gameplay_volume" type="range" min="0" max="200" value="100" /></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel caption-panel">
+          <div class="panel-heading"><div><span class="step">03</span><h2>Caption the moment</h2></div><span class="panel-note">OPTIONAL · SRT TIMING IS PRESERVED</span></div>
+          <div class="caption-layout"><label class="upload-tile subtitle-tile" for="subtitle-file"><span class="upload-icon">↥</span><span class="upload-copy"><strong>Import SRT</strong><small id="subtitle-name">Use an existing subtitle file</small></span><span class="plus">+</span></label><input id="subtitle-file" type="file" accept=".srt,text/plain" /><label class="caption-editor"><span class="label-line"><span>EDIT SUBTITLES</span><small>SRT timestamps + text</small></span><textarea id="subtitle_text" name="subtitle_text" spellcheck="false" placeholder="1&#10;00:00:00,000 --> 00:00:02,200&#10;No way that actually worked!&#10;&#10;2&#10;00:00:02,200 --> 00:00:04,000&#10;I almost missed the turn."></textarea></label></div>
+          <p class="hint">Each cue becomes a word-highlighted line. Keep the timestamps and edit the words to match your cut.</p>
+        </section>
+
+        <section class="render-bar"><div><span class="eyebrow">04 / EXPORT</span><p>1080 × 1920 · H.264 MP4 · rendered on this device</p></div><button id="generate" type="submit"><span>Generate short</span><b>↗</b></button></section>
+      </form>
+
+      <section id="job-panel" class="panel job-panel" hidden aria-live="polite"><div class="job-head"><div><span class="eyebrow">YOUR RENDER</span><h2 id="job-title">Preparing your short</h2></div><span id="job-percent">0%</span></div><div class="progress-track"><span id="progress-fill"></span></div><p id="job-message">Uploading your source videos…</p><video id="result-player" controls playsinline hidden></video><a id="download-link" class="download-link" hidden download="streamer-short.mp4">Download MP4 <span>↓</span></a></section>
+      <p class="footnote">Footage stays on this computer. Temporary uploads and renders are kept locally for up to 24 hours.</p>
+    </main>
+
+    <script src="/assets/studio.js" defer></script>
+  </body>
+</html>
