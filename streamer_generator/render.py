@@ -33,33 +33,32 @@ def build_filter_graph(
     captions: bool = True,
     caption_filename: str = "captions.ass",
 ) -> str:
-    """Fit complete source frames into stacked panels; keep captions in the divider."""
+    """Fill both panels with source footage and put captions directly over their seam."""
     duration = _number(duration, "duration", 0.05, 24 * 60 * 60)
     if fps not in (30, 60):
         raise ValueError("fps must be 30 or 60")
     streamer_volume = _number(streamer_volume, "streamer volume", 0, 2)
     gameplay_volume = _number(gameplay_volume, "gameplay volume", 0, 2)
-    panel_height, caption_height = 870, 180
+    top_height, bottom_height = 760, 1160
     duration_arg = f"{duration:.3f}"
     graph = [
         f"[0:v:0]trim=duration={duration_arg},setpts=PTS-STARTPTS,"
-        f"scale=1080:{panel_height}:force_original_aspect_ratio=decrease,"
-        f"pad=1080:{panel_height}:(ow-iw)/2:(oh-ih)/2:color=0x120e0d,"
-        f"setsar=1,fps={fps},format=yuv420p[top]",
+        f"scale=1080:{top_height}:force_original_aspect_ratio=increase,"
+        f"crop=1080:{top_height},setsar=1,"
+        f"fps={fps},format=yuv420p[top]",
         f"[1:v:0]trim=duration={duration_arg},setpts=PTS-STARTPTS,"
-        f"scale=1080:{panel_height}:force_original_aspect_ratio=decrease,"
-        f"pad=1080:{panel_height}:(ow-iw)/2:(oh-ih)/2:color=0x120e0d,"
-        f"setsar=1,fps={fps},format=yuv420p[bottom]",
+        f"scale=1080:{bottom_height}:force_original_aspect_ratio=increase,"
+        f"crop=1080:{bottom_height},setsar=1,"
+        f"fps={fps},format=yuv420p[bottom]",
     ]
+    graph.append("[top][bottom]vstack=inputs=2:shortest=1[stack]")
     if captions:
         graph.append(
-            f"color=c=0x211513:s=1080x{caption_height}:r={fps}:d={duration_arg},"
-            f"subtitles=filename='{caption_filename}':original_size=1080x{caption_height},"
-            "format=yuv420p[middle]"
+            f"[stack]subtitles=filename='{caption_filename}':original_size=1080x1920,"
+            "format=yuv420p[vout]"
         )
     else:
-        graph.append(f"color=c=0x211513:s=1080x{caption_height}:r={fps}:d={duration_arg},format=yuv420p[middle]")
-    graph.append("[top][middle][bottom]vstack=inputs=3:shortest=1,format=yuv420p[vout]")
+        graph.append("[stack]format=yuv420p[vout]")
 
     for index, (exists, volume) in enumerate(
         ((has_streamer_audio, streamer_volume), (has_gameplay_audio, gameplay_volume))

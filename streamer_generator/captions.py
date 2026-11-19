@@ -10,9 +10,9 @@ TIMING_LINE = re.compile(
     r"(\d{2}:\d{2}:\d{2}[,.]\d{3})(?:\s+.*)?$"
 )
 STYLES = {
-    "bold": {"font": "Arial", "size": 64, "primary": "&H00FFFFFF", "highlight": "&H0000D7FF", "outline": 5},
-    "clean": {"font": "Arial", "size": 58, "primary": "&H00FFFFFF", "highlight": "&H0000D7FF", "outline": 4},
-    "neon": {"font": "Arial", "size": 62, "primary": "&H00FFFFFF", "highlight": "&H0000FFFF", "outline": 6},
+    "bold": {"font": "Georgia", "size": 104, "primary": "&H0000FF00", "outline": 9},
+    "clean": {"font": "Georgia", "size": 96, "primary": "&H0000FF00", "outline": 8},
+    "neon": {"font": "Georgia", "size": 102, "primary": "&H0000FF00", "outline": 10},
 }
 
 
@@ -68,21 +68,23 @@ def _ass_text(value: str) -> str:
     return value.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
 
 
-def to_ass(cues: list[Cue], style: str = "bold") -> str:
-    """Build centered, outlined ASS captions with per-word karaoke timing."""
+def to_ass(cues: list[Cue], style: str = "bold", caption_y: int = 760) -> str:
+    """Build bold green, black-outlined captions that pop at the facecam/gameplay seam."""
     if style not in STYLES:
         raise ValueError(f"unknown caption style: {style}")
+    if not isinstance(caption_y, int) or not 0 <= caption_y <= 1920:
+        raise ValueError("caption_y must be between 0 and 1920")
     selected = STYLES[style]
     lines = [
         "[Script Info]",
         "ScriptType: v4.00+",
         "PlayResX: 1080",
-        "PlayResY: 180",
+        "PlayResY: 1920",
         "WrapStyle: 2",
         "ScaledBorderAndShadow: yes",
         "[V4+ Styles]",
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        f"Style: Default,{selected['font']},{selected['size']},{selected['primary']},{selected['highlight']},&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,{selected['outline']},2,5,48,48,0,1",
+        f"Style: Default,{selected['font']},{selected['size']},{selected['primary']},&H0000FF00,&H00000000,&H96000000,-1,0,0,0,100,100,0,0,1,{selected['outline']},4,5,40,40,0,1",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
     ]
@@ -90,12 +92,8 @@ def to_ass(cues: list[Cue], style: str = "bold") -> str:
         words = cue.text.split()
         if not words:
             continue
-        duration = max(1, round((cue.end - cue.start) * 100))
-        weights = [max(1, len(re.sub(r"\W", "", word))) for word in words]
-        total_weight = sum(weights)
-        word_durations = [max(1, int(duration * weight / total_weight)) for weight in weights]
-        # Keep the karaoke total within the cue duration after minimum rounding.
-        word_durations[-1] = max(1, duration - sum(word_durations[:-1]))
-        karaoke = " ".join(f"{{\\k{span}}}{_ass_text(word)}" for span, word in zip(word_durations, words))
-        lines.append(f"Dialogue: 0,{_ass_time(cue.start)},{_ass_time(cue.end)},Default,,0,0,0,,{karaoke}")
+        text = _ass_text(" ".join(words).upper())
+        font_size = min(selected["size"], max(58, round(1080 / (0.62 * len(text)))))
+        pop = f"{{\\an5\\pos(540,{caption_y})\\fs{font_size}\\fscx88\\fscy88\\t(0,120,\\fscx100\\fscy100)}}{text}"
+        lines.append(f"Dialogue: 0,{_ass_time(cue.start)},{_ass_time(cue.end)},Default,,0,0,0,,{pop}")
     return "\n".join(lines) + "\n"

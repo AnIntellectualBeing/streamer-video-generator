@@ -5,14 +5,14 @@
 ## What it produces
 
 - H.264 MP4 at 1080 × 1920 (9:16), 30 FPS by default; 60 FPS is optional.
-- The full streamer video at the top and the full gameplay frame at the bottom.
-- Each source is scaled down to fit its panel. It is not stretched, zoomed, or cropped; unused space is filled with a dark background.
-- Captions stay inside a separate center divider, so they do not cover the streamer or gameplay.
-- Word highlighting follows the SRT cue timing. Timing inside each cue is estimated from word length, so short, accurately timed cues give the best result.
+- Streamer video at the top (760 px) and GTA gameplay at the bottom (1,160 px).
+- Each panel is filled with its source video using a centered crop. There is no blurred fill or blank bars; the panels touch directly at the seam. Since landscape sources are cropped to fit portrait panels, inspect the result for cut-off faces, HUD, or action.
+- Large uppercase green captions with a thick black outline pop over that seam, matching the supplied reference style.
+- Each SRT cue appears as one uppercase phrase and briefly scales up when it starts. The tool does not estimate speech timing; accurate SRT timestamps are required for synchronization.
 - Streamer and gameplay audio are mixed at separately configurable levels and limited to avoid clipping.
 - Output duration is the shorter input's duration. Both videos start at their beginning.
 
-The tool does not detect faces, find highlights, transcribe speech, align independently recorded footage, or publish clips. Trim the two videos to the same moment and provide captions when needed.
+The tool does not find streams or highlights, extract a facecam from a composite stream, detect faces, transcribe speech, synchronize independently recorded footage, or publish clips. Prepare aligned facecam and gameplay files and an accurately timed SRT file before rendering. For a repeatable end-to-end checklist, see [the clip workflow](docs/CLIP-WORKFLOW.md).
 
 ## Requirements
 
@@ -83,7 +83,7 @@ Use `gta-streamer-face-clipper --help` to see all options. Caption styles are `b
 
 ## Caption file
 
-Pass an ordinary UTF-8 SRT file. Keep captions short and give each phrase its own accurately timed cue for better word highlighting.
+Pass an ordinary UTF-8 SRT file. Keep cues short and accurately timed; each phrase pops in over the panel seam.
 
 ```srt
 1
@@ -95,7 +95,7 @@ That was way too close!
 Look at that car!
 ```
 
-The render is silent when neither input has audio. If both have audio, both tracks are mixed; adjust `--streamer-volume` and `--gameplay-volume` to favor speech.
+Caption text is uppercased. Each cue is shown as a single phrase at the panel seam; it is not karaoke word highlighting. The render is silent when neither input has audio. If both have audio, both tracks are mixed; adjust `--streamer-volume` and `--gameplay-volume` to favor speech.
 
 ## Troubleshooting
 
@@ -104,7 +104,8 @@ The render is silent when neither input has audio. If both have audio, both trac
 - Invalid SRT: use `HH:MM:SS,mmm --> HH:MM:SS,mmm` timestamps with caption text on the next line.
 - Captions are not closely synchronized: split long dialogue into shorter cues and align their timestamps with the audio.
 - The streamer and gameplay appear to start at different moments: trim both source files to the same start before running the command.
-- The video looks smaller inside its panel: the tool preserves the entire frame instead of zooming or cutting off the edges. This is expected for source footage with a different shape from the panel.
+- Important content is cut off: the panels use a centered crop to avoid blur and bars. Reframe the input before rendering so the face, HUD, and gameplay action sit inside the center-safe area.
+- The clip starts at different moments: the tool starts both files at timestamp zero and does not sync them. Trim both files to the same event before rendering.
 - FFmpeg fails or runs out of space: check the reported FFmpeg error and ensure the destination drive has room for the MP4.
 
 ## Development

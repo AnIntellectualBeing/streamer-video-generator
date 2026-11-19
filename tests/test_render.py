@@ -6,7 +6,7 @@ from streamer_generator.render import build_filter_graph, render_video
 
 
 class RenderGraphTests(unittest.TestCase):
-    def test_sources_fit_inside_their_panels_without_zooming_or_cropping(self):
+    def test_sources_fill_panels_without_blurred_backgrounds(self):
         graph = build_filter_graph(
             duration=12.5,
             fps=30,
@@ -16,12 +16,14 @@ class RenderGraphTests(unittest.TestCase):
             has_gameplay_audio=True,
         )
 
-        self.assertIn("force_original_aspect_ratio=decrease", graph)
-        self.assertIn("pad=1080:", graph)
-        self.assertNotIn("force_original_aspect_ratio=increase", graph)
-        self.assertNotIn("crop=", graph)
+        self.assertIn("scale=1080:760:force_original_aspect_ratio=increase,crop=1080:760", graph)
+        self.assertIn("scale=1080:1160:force_original_aspect_ratio=increase,crop=1080:1160", graph)
+        self.assertNotIn("boxblur", graph)
+        self.assertNotIn("split=2[topbgraw]", graph)
+        self.assertIn("setpts=PTS-STARTPTS,scale=1080:760:force_original_aspect_ratio=increase,crop=1080:760", graph)
+        self.assertIn("setpts=PTS-STARTPTS,scale=1080:1160:force_original_aspect_ratio=increase,crop=1080:1160", graph)
 
-    def test_captions_are_rendered_in_a_separate_middle_band(self):
+    def test_captions_overlay_the_join_between_full_height_panels(self):
         graph = build_filter_graph(
             duration=12.5,
             fps=30,
@@ -31,10 +33,11 @@ class RenderGraphTests(unittest.TestCase):
             has_gameplay_audio=True,
         )
 
-        self.assertIn("color=c=0x211513:s=1080x180", graph)
-        self.assertIn("[top][middle][bottom]vstack=inputs=3", graph)
+        self.assertIn("[top][bottom]vstack=inputs=2", graph)
+        self.assertIn("[stack]subtitles=filename='captions.ass':original_size=1080x1920", graph)
+        self.assertNotIn("vstack=inputs=3", graph)
 
-    def test_filter_graph_uses_split_screen_karaoke_captions_and_audio_mix(self):
+    def test_filter_graph_uses_split_screen_join_captions_and_audio_mix(self):
         graph = build_filter_graph(
             duration=12.5,
             fps=60,
@@ -44,9 +47,11 @@ class RenderGraphTests(unittest.TestCase):
             has_gameplay_audio=False,
         )
 
-        self.assertIn("scale=1080:870", graph)
+        self.assertIn("scale=1080:760", graph)
+        self.assertIn("scale=1080:1160", graph)
         self.assertIn("fps=60", graph)
         self.assertIn("subtitles=filename='captions.ass'", graph)
+        self.assertIn("[top][bottom]vstack=inputs=2", graph)
         self.assertIn("volume=0.25", graph)
         self.assertIn("anullsrc=r=48000:cl=stereo", graph)
         self.assertIn("amix=inputs=2", graph)

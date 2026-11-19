@@ -21,11 +21,11 @@ Create `sample.srt`:
 The test render is ready!
 ```
 
-Render and inspect dimensions, frame rate, duration, audio, and the center caption band:
+Render and inspect dimensions, frame rate, duration, audio, and the phrase caption at the join between the two panels:
 
 ```sh
 gta-streamer-face-clipper --facecam sample-facecam.mp4 --gameplay sample-gameplay.mp4 --captions sample.srt --output sample-short.mp4
 ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,codec_type -show_entries format=duration -of json sample-short.mp4
 ```
 
-The sample videos are synthetic and should not be committed. Inspect a still frame to confirm the complete source picture remains in both panels and the caption is confined to the divider.
+The sample videos are synthetic and should not be committed. Inspect a still frame to confirm the center crop fills each panel without blur or bars, the important subject remains visible, and the caption sits across the panel join.
