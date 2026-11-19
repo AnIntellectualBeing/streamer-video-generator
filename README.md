@@ -12,7 +12,7 @@
 - Streamer and gameplay audio are mixed at separately configurable levels and limited to avoid clipping.
 - Output duration is the shorter input's duration. Both videos start at their beginning.
 
-The tool does not find streams or highlights, extract a facecam from a composite stream, detect faces, transcribe speech, synchronize independently recorded footage, or publish clips. Prepare aligned facecam and gameplay files and an accurately timed SRT file before rendering. For a repeatable end-to-end checklist, see [the clip workflow](docs/CLIP-WORKFLOW.md). A printable copy is available as [the PDF workflow guide](docs/GTA-Streamer-Face-Clipper-Guide.pdf).
+The tool does not find streams or highlights, extract a facecam from a composite stream, detect faces, transcribe speech, synchronize independently recorded footage, or publish clips. Prepare aligned facecam and gameplay files and an accurately timed SRT file before rendering. For a repeatable end-to-end checklist, see [the clip workflow](docs/CLIP-WORKFLOW.md). The premium PDF guide and complete agent prompt are available from the [GTA Streamer Face Clipper product page](https://masterprompt.anintellectualcompany.com/verticalclipper/).
 
 ## Requirements
 
