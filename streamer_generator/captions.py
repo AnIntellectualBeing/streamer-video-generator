@@ -10,9 +10,9 @@ TIMING_LINE = re.compile(
     r"(\d{2}:\d{2}:\d{2}[,.]\d{3})(?:\s+.*)?$"
 )
 STYLES = {
-    "bold": {"font": "Arial", "size": 76, "primary": "&H00FFFFFF", "highlight": "&H0000D7FF", "outline": 5},
-    "clean": {"font": "Arial", "size": 68, "primary": "&H00FFFFFF", "highlight": "&H0000D7FF", "outline": 4},
-    "neon": {"font": "Arial", "size": 74, "primary": "&H00FFFFFF", "highlight": "&H0000FFFF", "outline": 6},
+    "bold": {"font": "Arial", "size": 64, "primary": "&H00FFFFFF", "highlight": "&H0000D7FF", "outline": 5},
+    "clean": {"font": "Arial", "size": 58, "primary": "&H00FFFFFF", "highlight": "&H0000D7FF", "outline": 4},
+    "neon": {"font": "Arial", "size": 62, "primary": "&H00FFFFFF", "highlight": "&H0000FFFF", "outline": 6},
 }
 
 
@@ -77,12 +77,12 @@ def to_ass(cues: list[Cue], style: str = "bold") -> str:
         "[Script Info]",
         "ScriptType: v4.00+",
         "PlayResX: 1080",
-        "PlayResY: 1920",
+        "PlayResY: 180",
         "WrapStyle: 2",
         "ScaledBorderAndShadow: yes",
         "[V4+ Styles]",
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        f"Style: Default,{selected['font']},{selected['size']},{selected['primary']},{selected['highlight']},&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,{selected['outline']},2,2,72,72,220,1",
+        f"Style: Default,{selected['font']},{selected['size']},{selected['primary']},{selected['highlight']},&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,{selected['outline']},2,5,48,48,0,1",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
     ]

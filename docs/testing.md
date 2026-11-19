@@ -1,12 +1,12 @@
-# Testing and sample render
+# Test and sample render
 
-The unit tests use Python's standard library:
+Run the unit tests:
 
 ```sh
 python -m unittest discover -s tests -v
 ```
 
-For an end-to-end render without personal footage, generate two short synthetic source clips with FFmpeg, then render them:
+To check an actual render without using private footage, create two short synthetic source clips with FFmpeg:
 
 ```sh
 ffmpeg -y -f lavfi -i "testsrc2=size=1280x720:rate=30:duration=3" -f lavfi -i "sine=frequency=440:duration=3" -c:v libx264 -pix_fmt yuv420p -c:a aac sample-facecam.mp4
@@ -21,11 +21,11 @@ Create `sample.srt`:
 The test render is ready!
 ```
 
-Render and inspect the output dimensions, frame rate, duration, audio, and caption placement:
+Render and inspect dimensions, frame rate, duration, audio, and the center caption band:
 
 ```sh
-python -m streamer_generator render --facecam sample-facecam.mp4 --gameplay sample-gameplay.mp4 --captions sample.srt --output output/sample-short.mp4 --fps 30
-ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,codec_type -show_entries format=duration -of json output/sample-short.mp4
+gta-streamer-face-clipper --facecam sample-facecam.mp4 --gameplay sample-gameplay.mp4 --captions sample.srt --output sample-short.mp4
+ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,codec_type -show_entries format=duration -of json sample-short.mp4
 ```
 
-The sample media is generated and should not be committed. The final visual check is to open the MP4 and inspect both the opening and a frame with active captions.
+The sample videos are synthetic and should not be committed. Inspect a still frame to confirm the complete source picture remains in both panels and the caption is confined to the divider.

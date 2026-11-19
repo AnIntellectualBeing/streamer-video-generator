@@ -5,6 +5,7 @@ import math
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Callable
 
@@ -24,42 +25,41 @@ def _number(value: float, name: str, low: float, high: float) -> float:
 def build_filter_graph(
     *,
     duration: float,
-    facecam_height: int,
     fps: int,
     streamer_volume: float,
     gameplay_volume: float,
-    facecam_focus: tuple[float, float],
-    gameplay_focus: tuple[float, float],
     has_streamer_audio: bool,
     has_gameplay_audio: bool,
     captions: bool = True,
+    caption_filename: str = "captions.ass",
 ) -> str:
-    """Build the FFmpeg graph for a no-stretch, 9:16 stacked video."""
+    """Fit complete source frames into stacked panels; keep captions in the divider."""
     duration = _number(duration, "duration", 0.05, 24 * 60 * 60)
-    if facecam_height not in (576, 672, 768, 864, 960):
-        raise ValueError("facecam height must be a supported split size")
     if fps not in (30, 60):
         raise ValueError("fps must be 30 or 60")
     streamer_volume = _number(streamer_volume, "streamer volume", 0, 2)
     gameplay_volume = _number(gameplay_volume, "gameplay volume", 0, 2)
-    fx, fy = (_number(v, "facecam focus", 0, 1) for v in facecam_focus)
-    gx, gy = (_number(v, "gameplay focus", 0, 1) for v in gameplay_focus)
-    gameplay_height = 1920 - facecam_height
+    panel_height, caption_height = 870, 180
     duration_arg = f"{duration:.3f}"
     graph = [
         f"[0:v:0]trim=duration={duration_arg},setpts=PTS-STARTPTS,"
-        f"scale=1080:{facecam_height}:force_original_aspect_ratio=increase,"
-        f"crop=1080:{facecam_height}:(in_w-out_w)*{fx:.3f}:(in_h-out_h)*{fy:.3f},"
+        f"scale=1080:{panel_height}:force_original_aspect_ratio=decrease,"
+        f"pad=1080:{panel_height}:(ow-iw)/2:(oh-ih)/2:color=0x120e0d,"
         f"setsar=1,fps={fps},format=yuv420p[top]",
         f"[1:v:0]trim=duration={duration_arg},setpts=PTS-STARTPTS,"
-        f"scale=1080:{gameplay_height}:force_original_aspect_ratio=increase,"
-        f"crop=1080:{gameplay_height}:(in_w-out_w)*{gx:.3f}:(in_h-out_h)*{gy:.3f},"
+        f"scale=1080:{panel_height}:force_original_aspect_ratio=decrease,"
+        f"pad=1080:{panel_height}:(ow-iw)/2:(oh-ih)/2:color=0x120e0d,"
         f"setsar=1,fps={fps},format=yuv420p[bottom]",
     ]
-    video = "[top][bottom]vstack=inputs=2"
     if captions:
-        video += ",subtitles=filename='captions.ass'"
-    graph.append(f"{video},format=yuv420p[vout]")
+        graph.append(
+            f"color=c=0x211513:s=1080x{caption_height}:r={fps}:d={duration_arg},"
+            f"subtitles=filename='{caption_filename}':original_size=1080x{caption_height},"
+            "format=yuv420p[middle]"
+        )
+    else:
+        graph.append(f"color=c=0x211513:s=1080x{caption_height}:r={fps}:d={duration_arg},format=yuv420p[middle]")
+    graph.append("[top][middle][bottom]vstack=inputs=3:shortest=1,format=yuv420p[vout]")
 
     for index, (exists, volume) in enumerate(
         ((has_streamer_audio, streamer_volume), (has_gameplay_audio, gameplay_volume))
@@ -109,12 +109,9 @@ def render_video(
     *,
     subtitle_text: str = "",
     style: str = "bold",
-    facecam_height: int = 768,
     fps: int = 30,
     streamer_volume: float = 1,
     gameplay_volume: float = 1,
-    facecam_focus: tuple[float, float] = (0.5, 0.5),
-    gameplay_focus: tuple[float, float] = (0.5, 0.5),
     on_progress: Progress | None = None,
     ffmpeg: str | None = None,
     ffprobe: str | None = None,
@@ -133,21 +130,24 @@ def render_video(
     game_info = probe_media(gameplay, ffprobe)
     duration = min(face_info["duration"], game_info["duration"])
     cue_list = parse_srt(subtitle_text)
-    ass_path = output.parent / "captions.ass"
+    ass_path: Path | None = None
     if cue_list:
-        ass_path.write_text(to_ass(cue_list, style), encoding="utf-8")
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".ass", prefix="gta-face-clipper-",
+            dir=output.parent, delete=False,
+        ) as captions_file:
+            ass_path = Path(captions_file.name)
+            captions_file.write(to_ass(cue_list, style))
 
     graph = build_filter_graph(
         duration=duration,
-        facecam_height=facecam_height,
         fps=fps,
         streamer_volume=streamer_volume,
         gameplay_volume=gameplay_volume,
-        facecam_focus=facecam_focus,
-        gameplay_focus=gameplay_focus,
         has_streamer_audio=face_info["has_audio"],
         has_gameplay_audio=game_info["has_audio"],
         captions=bool(cue_list),
+        caption_filename=ass_path.name if ass_path else "captions.ass",
     )
     command = [
         ffmpeg, "-hide_banner", "-nostdin", "-y", "-i", str(facecam), "-i", str(gameplay),
@@ -157,15 +157,20 @@ def render_video(
     ]
     if on_progress:
         on_progress(0.18, "Composing facecam and gameplay")
-    process = subprocess.Popen(
-        command,
-        cwd=output.parent,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        process = subprocess.Popen(
+            command,
+            cwd=output.parent,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError as error:
+        if ass_path and ass_path.exists():
+            ass_path.unlink()
+        raise RuntimeError(f"FFmpeg could not start: {error}") from error
     stderr_chunks: list[str] = []
     assert process.stdout is not None and process.stderr is not None
     # FFmpeg writes progress to stdout. stderr is drained on a helper thread to avoid pipe backpressure.
@@ -197,8 +202,12 @@ def render_video(
             process.wait()
         if output.exists():
             output.unlink()
+        if ass_path and ass_path.exists():
+            ass_path.unlink()
         raise RuntimeError("FFmpeg render exceeded the time limit and was stopped.") from error
     stderr_thread.join(timeout=5)
+    if ass_path and ass_path.exists():
+        ass_path.unlink()
     if return_code:
         if output.exists():
             output.unlink()
